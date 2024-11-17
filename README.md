@@ -44,6 +44,62 @@ DB_USER=root
 DB_PASSWORD=yourpassword
 DB_NAME=todolist
 ```
+
+3. mysql commands
+```
+- Log in as the root user (or any other user): 
+mysql -u root -p
+
+- List all databases:
+SHOW DATABASES;
+
+- Use a specific database
+USE database_name;
+
+- Show all tables in the current db
+SHOW TABLES;
+
+- Display the structure of a table
+DESCRIBE table_name;
+
+- Create a database
+CREATE DATABASE database_name;
+
+- Create a table
+USE todolist;
+
+CREATE TABLE todos (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    title VARCHAR(255) NOT NULL,
+    completed BOOLEAN DEFAULT false
+);
+
+- Insert data into the table
+INSERT INTO todos (title, completed) VALUES ('Finish Homework', false);
+
+INSERT INTO todos (title, completed) 
+VALUES 
+    ('Buy groceries', false),
+    ('Clean the house', false),
+    ('Pay bills', true),
+    ('Complete project report', false);
+
+- Update the data
+UPDATE todos SET completed = true WHERE title = 'Clean the house';
+
+
+- Check the Data
+SELECT * FROM todos;
+
+
+- Delete a db/table
+DROP DATABASE database_name;
+DROP TABLE table_name;
+
+- Exit MySQL
+EXIT;
+```
+
 3. Run database migrations (if applicable).
 
 4. Start the Application

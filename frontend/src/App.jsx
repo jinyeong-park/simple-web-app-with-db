@@ -4,16 +4,29 @@ import "./styles.css"
 import { TodoList } from "./TodoList"
 
 export default function App() {
-  const [todos, setTodos] = useState(() => {
-    const localValue = localStorage.getItem("ITEMS")
-    if (localValue == null) return []
 
-    return JSON.parse(localValue)
-  })
+  const [todos, setTodos] = useState([]);
 
+  // const [todos, setTodos] = useState(() => {
+  //   const localValue = localStorage.getItem("ITEMS")
+  //   if (localValue == null) return []
+
+  //   return JSON.parse(localValue)
+  // })
+
+  // useEffect(() => {
+  //   localStorage.setItem("ITEMS", JSON.stringify(todos))
+  // }, [todos])
+
+    // Fetch todos from the backend API on component mount
   useEffect(() => {
-    localStorage.setItem("ITEMS", JSON.stringify(todos))
-  }, [todos])
+    fetch('http://localhost:8081/todos')  // Make sure the server is running
+      .then((response) => response.json())
+      .then((data) => {
+        setTodos(data);  // Set the fetched data to the todos state
+      })
+      .catch((error) => console.error('Error fetching todos:', error));
+  }, []);
 
   function addTodo(title) {
     setTodos(currentTodos => {

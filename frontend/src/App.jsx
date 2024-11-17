@@ -23,7 +23,14 @@ export default function App() {
     fetch('http://localhost:8081/todos')  // Make sure the server is running
       .then((response) => response.json())
       .then((data) => {
-        setTodos(data);  // Set the fetched data to the todos state
+      console.log('data:', data)
+       // Ensure the data is an array before setting it
+      if (Array.isArray(data)) {
+        setTodos(data);
+      } else {
+        console.error('Data received is not an array:', data);
+        setTodos([]); // Set empty array if the data is not an array
+      }
       })
       .catch((error) => console.error('Error fetching todos:', error));
   }, []);

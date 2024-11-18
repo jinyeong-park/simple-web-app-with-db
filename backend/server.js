@@ -48,25 +48,42 @@ app.post('/todos', (req, res) => {
     });
 });
 
-// Update a todo's completed status
-app.put('/todos/:id', (req, res) => {
-    const sql = "UPDATE todos SET completed = ? WHERE id = ?";
-    const { completed } = req.body;
-    const { id } = req.params;
+// Update a todo's completed based on the title < need to debug more..
+app.put('/todos/:title', (req, res) => {
+    const { title } = req.params;  // Get title from URL params
+    const { completed } = req.body;  // Get completed status from the request body
 
-    db.query(sql, [completed, id], (err, result) => {
+    // Ensure completed is a valid number (1 for true, 0 for false)
+    const completedStatus = completed ? 1 : 0;
+
+    const sql = "UPDATE todos SET completed = ? WHERE title = ?";
+
+    db.query(sql, [completedStatus, title], (err, result) => {
         if (err) return res.status(500).json({ error: err.message });
+
+        // Check if any row was affected
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ message: "Todo not found" });
+        }
+
         return res.json({ message: "Todo updated successfully!" });
     });
 });
 
-// Delete a todo
-app.delete('/todos/:id', (req, res) => {
-    const sql = "DELETE FROM todos WHERE id = ?";
-    const { id } = req.params;
 
-    db.query(sql, [id], (err, result) => {
-        if (err) return res.status(500).json({ error: err.message });
+
+// Delete a todo by title
+app.delete('/todos/:title', (req, res) => {
+    const { title } = req.params;
+    const sql = "DELETE FROM todos WHERE title = ?";
+
+    db.query(sql, [title], (err, result) => {
+        if (err) {
+            return res.status(500).json({ error: err.message });
+        }
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ message: "Todo not found" });
+        }
         return res.json({ message: "Todo deleted successfully!" });
     });
 });

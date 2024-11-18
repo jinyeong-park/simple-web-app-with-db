@@ -160,12 +160,11 @@ terraform destroy
 ```
 
 ##### Terraform folder structure
-terraform/                  # Terraform code directory
-├── main.tf                 # Defines the main infrastructure resources (EC2, RDS, VPC, etc.)
-├── provider.tf             # AWS provider configuration (connects to AWS resources)
-├── variables.tf            # Defines input variables (e.g., instance size, region, etc.)
+terraform/                  # Terraform code directory  
+├── main.tf                 # Defines the main infrastructure resources (EC2, RDS, VPC, etc.)  
+├── provider.tf             # AWS provider configuration (connects to AWS resources)  
+├── variables.tf            # Defines input variables (e.g., instance size, region, etc.)  
 └── outputs.tf              # Output values (e.g., DB URL, load balancer URL, etc.)
-
 
 
 #### Useful Resources for Terraform

@@ -1,83 +1,88 @@
-# VPC
-resource "aws_vpc" "main" {
-  cidr_block = var.vpc_cidr
+terraform {
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "5.76.0"
+    }
+  }
+}
+resource "aws_db_instance" "myrds" {
+  engine               = "mysql"
+  engine_version       = "8.0.39"
+  allocated_storage    = 20
+  storage_type         = "gp3"
+  identifier           = "todolist-db"
+  db_name             = "todolist"
+  instance_class      = "db.t3.micro"
+  username            = "admin"
+  password            = "Password123!"  # Changed to meet minimum requirements
+  publicly_accessible = false
+  multi_az            = true
+  
+  vpc_security_group_ids = [aws_security_group.rds_sg.id]
+  db_subnet_group_name   = aws_db_subnet_group.my_db_subnet_group.name
+
+  tags = {
+    Name = "my-rds"
+  }
+  # Ensure this is set for a final snapshot when deleting the instance
+  skip_final_snapshot   = false
+  final_snapshot_identifier = "todolist-db-final-snapshot"
+}
+########################################
+# Local Variables
+########################################
+locals {
+  name        = "cluster"
+  region      = "us-east-1"
+
+  vpc_cidr    = "172.31.0.0/24"
+  azs         = ["us-east-1a", "us-east-1b"]
+
+  public_subnet    = "172.31.0.0/26"
+  private_subnet_1 = "172.31.0.64/26"
+  private_subnet_2 = "172.31.0.128/26"
+  reserved_subnet  = "172.31.0.192/26"
 }
 
-# Subnet (Public - Bastion Host)
-# resource "aws_subnet" "public" {
-#   vpc_id                  = aws_vpc.main.id
-#   cidr_block              = "172.31.0.128/25"
-#   availability_zone       = "us-west-2a"
-#   map_public_ip_on_launch = true
-# }
-resource "aws_subnet" "public" {
-  count                   = 2
-  vpc_id                  = aws_vpc.main.id
-  cidr_block              = cidrsubnet(var.vpc_cidr, 8, count.index + 2)
-  availability_zone       = var.azs[count.index]
-  map_public_ip_on_launch = true
+provider "aws" {
+  region = local.region
 }
 
+########################################
+# VPC Module
+# VPC Module already create and associate route table and internet gateway
+# -> so just focus on Security
+########################################
+module "vpc" {
+  source  = "terraform-aws-modules/vpc/aws"
+  version = "~> 5.0"
 
-# Subnet (Private)
-# resource "aws_subnet" "private" {
-#   vpc_id                  = aws_vpc.main.id
-#   cidr_block              = "172.31.0.0/25"
-#   availability_zone       = "us-west-2a"
-#   map_public_ip_on_launch = false
-# }
-resource "aws_subnet" "private" {
-  count                   = 2
-  vpc_id                  = aws_vpc.main.id
-  cidr_block              = cidrsubnet(var.vpc_cidr, 8, count.index)
-  availability_zone       = var.azs[count.index]
-  map_public_ip_on_launch = false
+  name                = "my-vpc"
+  cidr                = local.vpc_cidr
+  azs                 = local.azs
+  public_subnets      = [local.public_subnet]
+  private_subnets     = [local.private_subnet_1, local.private_subnet_2]
+
+  enable_nat_gateway   = false  # Changed to true to allow private subnet access to internet
+  # single_nat_gateway   = true  # Use single NAT Gateway to save costs
+  enable_dns_hostnames = true
+  enable_dns_support   = true
 }
 
-# Internet gateway (Public Subnet)
-resource "aws_internet_gateway" "main" {
-  vpc_id = aws_vpc.main.id
-}
-
-# Route Table (Public Subnet)
-resource "aws_route_table" "public" {
-  vpc_id = aws_vpc.main.id
-}
-
-# Route (인터넷을 향해 트래픽 보내기)
-resource "aws_route" "internet_access" {
-  route_table_id         = aws_route_table.public.id
-  destination_cidr_block = "0.0.0.0/0"
-  gateway_id             = aws_internet_gateway.main.id
-}
-
-# Connect to route table
-resource "aws_route_table_association" "public" {
-  subnet_id      = aws_subnet.public[0].id
-  route_table_id = aws_route_table.public.id
-}
-
-# Bastion Host용 EC2 인스턴스 (Public Subnet)
-resource "aws_instance" "bastion" {
-  ami           = "ami-0c55b159cbfafe1f0"  # Amazon Linux 2 AMI (다른 AMI로 바꾸세요)
-  instance_type = var.instance_type
-  subnet_id     = aws_subnet.public.id
-  key_name      = "your-key-pair"  # 실제 키 페어를 설정하세요.
-  associate_public_ip_address = true
-  security_groups = [aws_security_group.bastion-sg.id]
-}
-
-# Bastion Host - Security Group
-resource "aws_security_group" "bastion-sg" {
+########################################
+# Security Groups
+########################################
+resource "aws_security_group" "bastion_sg" {
   name        = "bastion-sg"
-  description = "Security group for Bastion host"
-  vpc_id      = aws_vpc.main.id
+  description = "Allow SSH access"
+  vpc_id      = module.vpc.vpc_id
 
   ingress {
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
+    cidr_blocks = ["0.0.0.0/0"]  # Consider restricting to your IP
   }
 
   egress {
@@ -88,56 +93,10 @@ resource "aws_security_group" "bastion-sg" {
   }
 }
 
-# MySQL RDS instance (Active-Standby 구성)
-resource "aws_db_instance" "primary_db" {
-  allocated_storage    = 20
-  storage_type         = "gp2"
-  engine               = "mysql"
-  engine_version       = "8.0"
-  instance_class       = var.db_instance_class
-  name                 = var.db_name
-  username             = var.db_username
-  password             = var.db_password
-  parameter_group_name = "default.mysql8.0"
-  db_subnet_group_name = aws_db_subnet_group.main.id
-  multi_az             = true
-  publicly_accessible  = false
-  skip_final_snapshot  = true
-}
-
-# RDS Subnet group
-# resource "aws_db_subnet_group" "main" {
-#   name        = "my-db-subnet-group"
-#   subnet_ids  = [aws_subnet.private.id]
-#   description = "My DB subnet group"
-# }
-resource "aws_db_subnet_group" "main" {
-  name        = "my-db-subnet-group"
-  subnet_ids  = aws_subnet.private[*].id
-  description = "My DB subnet group"
-}
-
-# Load balancer (Web server)
-resource "aws_lb" "web_lb" {
-  name               = "web-load-balancer"
-  internal           = false
-  load_balancer_type = "application"
-  security_groups    = [aws_security_group.web_sg.id]
-  subnets = aws_subnet.public[*].id
-
-  enable_deletion_protection = false
-  idle_timeout {
-    minutes = 60
-  }
-
-  enable_cross_zone_load_balancing = true
-}
-
-# Web server - Security Group
 resource "aws_security_group" "web_sg" {
-  name        = "web-sg"
-  description = "Security group for web servers"
-  vpc_id      = aws_vpc.main.id
+  name        = "web-server-sg"
+  description = "Allow HTTP traffic"
+  vpc_id      = module.vpc.vpc_id
 
   ingress {
     from_port   = 80
@@ -154,46 +113,110 @@ resource "aws_security_group" "web_sg" {
   }
 }
 
-# EC2 Web server - 웹 서버가 Private Subnet에 배치되도록 수정.
-# resource "aws_instance" "web_server" {
-#   ami           = "ami-0c55b159cbfafe1f0" 
-#   instance_type = var.instance_type
-#   subnet_id     = aws_subnet.private.id
-#   security_groups = [aws_security_group.web_sg.id]
+resource "aws_security_group" "rds_sg" {
+  name        = "rds-sg"
+  description = "Allow MySQL traffic"
+  vpc_id      = module.vpc.vpc_id
 
-#   tags = {
-#     Name = "Web Server"
-#   }
-# }
+  ingress {
+    from_port       = 3306
+    to_port         = 3306
+    protocol        = "tcp"
+    security_groups = [aws_security_group.web_sg.id]
+  }
 
-resource "aws_instance" "web_server" {
-  ami           = "ami-0c55b159cbfafe1f0" # Amazon Linux 2 AMI (다른 AMI로 바꾸기!!)
-  instance_type = var.instance_type
-  subnet_id     = aws_subnet.private[0].id
-  security_groups = [aws_security_group.web_sg.id]
-
-  user_data = <<-EOT
-    #!/bin/bash
-    sudo yum update -y
-    sudo yum install -y httpd
-    echo "Hello from Web Server!" > /var/www/html/index.html
-    sudo systemctl start httpd
-    sudo systemctl enable httpd
-  EOT
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
 }
 
-# Load balancer listener
-resource "aws_lb_listener" "web_listener" {
-  load_balancer_arn = aws_lb.web_lb.arn
-  port              = "80"
-  protocol          = "HTTP"
+########################################
+# EC2
+########################################
+resource "aws_instance" "bastion" {
+  ami           = "ami-0c02fb55956c7d316"
+  instance_type = "t2.micro"
 
-  default_action {
-    type             = "fixed-response"
-    fixed_response {
-      status_code = 200
-      content_type = "text/plain"
-      message_body = "Hello from Load Balancer!"
+  subnet_id                   = module.vpc.public_subnets[0]
+  vpc_security_group_ids      = [aws_security_group.bastion_sg.id]
+  associate_public_ip_address = true
+
+  tags = {
+    Name = "Bastion Host"
+  }
+}
+
+resource "aws_launch_template" "web-server" {
+  name          = "web-launch-template"
+  image_id      = "ami-0c02fb55956c7d316"
+  instance_type = "t2.micro"
+
+  network_interfaces {
+    security_groups = [aws_security_group.web_sg.id]
+  }
+
+  tag_specifications {
+    resource_type = "instance"
+    tags = {
+      Name = "web-server"
     }
   }
+}
+
+########################################
+# Auto Scaling
+########################################
+resource "aws_autoscaling_group" "web" {
+  desired_capacity    = 2
+  max_size           = 5
+  min_size           = 2
+  vpc_zone_identifier = module.vpc.private_subnets
+  
+  launch_template {
+    id      = aws_launch_template.web-server.id
+    version = "$Latest"
+  }
+  
+  health_check_type         = "EC2"
+  health_check_grace_period = 300
+}
+
+########################################
+# RDS
+########################################
+resource "aws_db_subnet_group" "my_db_subnet_group" {
+  name        = "my-db-subnet-group"
+  description = "My DB Subnet Group for private subnets"
+  subnet_ids  = module.vpc.private_subnets
+
+  tags = {
+    Name = "my-db-subnet-group"
+  }
+}
+
+resource "aws_db_instance" "myrds" {
+  engine               = "mysql"
+  engine_version       = "8.0.39"
+  allocated_storage    = 20
+  storage_type         = "gp3"
+  identifier           = "todolist-db"
+  db_name             = "todolist"
+  instance_class      = "db.t3.micro"
+  username            = "admin"
+  password            = "Password123!"  # Changed to meet minimum requirements
+  publicly_accessible = false
+  multi_az            = true
+  
+  vpc_security_group_ids = [aws_security_group.rds_sg.id]
+  db_subnet_group_name   = aws_db_subnet_group.my_db_subnet_group.name
+
+  tags = {
+    Name = "my-rds"
+  }
+  # Ensure this is set for a final snapshot when deleting the instance
+  skip_final_snapshot   = false
+  final_snapshot_identifier = "todolist-db-final-snapshot"
 }

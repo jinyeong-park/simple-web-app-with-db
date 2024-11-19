@@ -6,18 +6,18 @@ This app features a simple yet powerful user interface for adding, updating, del
 The application is designed for **High Availability (HA)**, deployed on AWS infrastructure, and includes features like load balancing, active-standby database configuration, and private subnet setup with a Bastion host for secure access.
 
 
-
 ## **Project Structure**
 The project is organized into the following directories:
 
-- backend/: Contains the API and server code (Node.js with Express).
 - frontend/: Contains the React.js frontend application.
+- backend/: Contains the API and server code (Node.js with Express).
 - terraform/: Terraform configuration files to provision the AWS infrastructure.
+
 
 ## **Tech Stack**
 - **Frontend:** React  
 - **Backend:** Node.js, Express.js  
-- **Database:** MySQL (RDS on AWS)  
+- **Database:** MySQL, MySQL Workbench, AWS RDS  
 - **Infrastructure**: AWS (VPC, EC2, RDS, Load Balancer, Bastion Host)
 - **Deployment**: Terraform for Infrastructure as Code (IaC)
 

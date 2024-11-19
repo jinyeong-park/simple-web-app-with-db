@@ -146,9 +146,13 @@ EXIT;
 ```
 
 #### Terraform Setup
+
+For the terraform code, check out https://github.com/jinyeong-park/terraform-aws
+
 ```
 cd terraform
 terraform init
+terraform validate # optional
 terraform plan
 terraform apply
 ```
@@ -170,6 +174,7 @@ terraform/                  # Terraform code directory
 #### Useful Resources for Terraform
 - [Terraform doc for AWS - Prerequisites](https://developer.hashicorp.com/terraform/tutorials/aws-get-started/aws-build)
 - [Terraform registry AWS](https://registry.terraform.io/providers/hashicorp/aws/latest)
+- [Terraform syntax](https://developer.hashicorp.com/terraform/language)
 
 <!-- 시간 되면.... 밑의 구조로 수정 -->
 <!-- terraform/                         # Terraform code for provisioning AWS resources

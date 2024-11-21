@@ -37,6 +37,10 @@ db.connect((err) => {
 });
 
 // Routes
+app.get('/', (req, res) => {
+    res.send('Welcome to the Node.js server!');
+  });
+  
 app.get('/api', (req, res) => {
     res.send('API is working!');
   });

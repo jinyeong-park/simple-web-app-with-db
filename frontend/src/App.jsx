@@ -43,13 +43,10 @@ export default function App() {
     })
     .catch((error) => console.error('Error adding todo:', error));
   }
-
-  function toggleTodo(title, completed) {
-    // Ensure completed is sent as a number (1 or 0)
+   
+  function toggleTodo(id, completed) {
     const completedStatus = completed ? 1 : 0;
-
-    // Send a PUT request to the server to update the todo's completed status by title
-    fetch(`http://localhost:8081/todos/${encodeURIComponent(title)}`, {
+    fetch(`http://localhost:8081/todos/${id}`, {
         method: 'PUT',
         headers: {
             'Content-Type': 'application/json',
@@ -59,44 +56,36 @@ export default function App() {
     .then(response => response.json())
     .then((data) => {
         if (data.message === "Todo updated successfully!") {
-            // Update the todo in the state with the new completed status
-            setTodos(currentTodos => currentTodos.map(todo => {
-                if (todo.title === title) {
-                    return { ...todo, completed: completedStatus };
-                }
-                return todo;
-            }));
+            setTodos(currentTodos => currentTodos.map(todo =>
+                todo.id === id ? { ...todo, completed: completedStatus } : todo
+            ));
         } else {
-            console.error('Failed to update todo:', data); // Handle error if update failed
+            console.error('Failed to update todo:', data);
         }
     })
     .catch((error) => {
-        console.error('Error updating todo:', error); // Error logging
+        console.error('Error updating todo:', error);
     });
-  }
+}
 
 
-
-  function deleteTodo(title) {
-    
-    // Send a DELETE request to the server to delete a todo by title
-    fetch(`http://localhost:8081/todos/${encodeURIComponent(title)}`, {
+  function deleteTodo(id) {
+    fetch(`http://localhost:8081/todos/${id}`, {
         method: 'DELETE',
     })
     .then(response => response.json())
     .then((data) => {
-        // Check if the deletion was successful
         if (data.message === "Todo deleted successfully!") {
-            // console.log('Todo deleted:', title);  // Debugging line to confirm deletion
-            setTodos(currentTodos => currentTodos.filter(todo => todo.title !== title));
+            setTodos(currentTodos => currentTodos.filter(todo => todo.id !== id));
         } else {
-            console.error('Failed to delete todo:', data);  // Debugging error message
+            console.error('Failed to delete todo:', data);
         }
     })
     .catch((error) => {
-        console.error('Error deleting todo:', error);  // Error logging
+        console.error('Error deleting todo:', error);
     });
 }
+
 
 
   return (

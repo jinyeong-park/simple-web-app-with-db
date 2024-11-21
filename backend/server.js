@@ -10,20 +10,20 @@ app.use(cors());
 app.use(express.json()); // To parse JSON bodies
 
 // Database Connection
-// const db = mysql.createConnection({
-//     host: process.env.DB_HOST,
-//     user: process.env.DB_USER,
-//     password: process.env.DB_PASSWORD,
-//     database: process.env.DB_NAME
-// });
-
 const db = mysql.createConnection({
-    host: 'todolist.cjs48um081zi.us-east-1.rds.amazonaws.com',
-    user: 'admin',
-    password: 'newpassword123',
-    database: 'todolist',
-    port: 3306
+    host: process.env.DB_HOST,
+    user: process.env.DB_USER,
+    password: process.env.DB_PASSWORD,
+    database: process.env.DB_NAME
 });
+
+// const db = mysql.createConnection({
+//     host: 'todolist.cjs48um081zi.us-east-1.rds.amazonaws.com',
+//     user: 'admin',
+//     password: 'newpassword123',
+//     database: 'todolist',
+//     port: 3306
+// });
 
 
 
@@ -37,13 +37,13 @@ db.connect((err) => {
 });
 
 // Routes
-app.get('/', (req, res) => {
-    res.send('Welcome to the Node.js server!');
-  });
+// app.get('/', (req, res) => {
+//     res.send('Welcome to the Node.js server!');
+//   });
   
-app.get('/api', (req, res) => {
-    res.send('API is working!');
-  });
+// app.get('/api', (req, res) => {
+//     res.send('API is working!');
+//   });
 
 // Fetch all todos
 app.get('/todos', (req, res) => {
@@ -66,44 +66,41 @@ app.post('/todos', (req, res) => {
 });
 
 // Update a todo's completed based on the title < need to debug more..
-app.put('/todos/:title', (req, res) => {
-    const { title } = req.params;  // Get title from URL params
-    const { completed } = req.body;  // Get completed status from the request body
-
-    // Ensure completed is a valid number (1 for true, 0 for false)
-    const completedStatus = completed ? 1 : 0;
-
-    const sql = "UPDATE todos SET completed = ? WHERE title = ?";
-
-    db.query(sql, [completedStatus, title], (err, result) => {
-        if (err) return res.status(500).json({ error: err.message });
-
-        // Check if any row was affected
-        if (result.affectedRows === 0) {
-            return res.status(404).json({ message: "Todo not found" });
-        }
-
-        return res.json({ message: "Todo updated successfully!" });
+app.put('/todos/:id', (req, res) => {
+    const { id } = req.params;
+    const { completed } = req.body;
+  
+    db.query('UPDATE todos SET completed = ? WHERE id = ?', [completed, id], (err, results) => {
+      if (err) {
+        console.error('Error updating todo:', err);
+        return res.status(500).json({ message: 'Error updating todo' });
+      }
+      if (results.affectedRows === 0) {
+        return res.status(404).json({ message: 'Todo not found' });
+      }
+      res.json({ message: 'Todo updated successfully!' });
     });
-});
+  });
 
 
 
 // Delete a todo by title
-app.delete('/todos/:title', (req, res) => {
-    const { title } = req.params;
-    const sql = "DELETE FROM todos WHERE title = ?";
-
-    db.query(sql, [title], (err, result) => {
-        if (err) {
-            return res.status(500).json({ error: err.message });
-        }
-        if (result.affectedRows === 0) {
-            return res.status(404).json({ message: "Todo not found" });
-        }
-        return res.json({ message: "Todo deleted successfully!" });
+app.delete('/todos/:id', (req, res) => {
+    const { id } = req.params;
+  
+    db.query('DELETE FROM todos WHERE id = ?', [id], (err, results) => {
+      if (err) {
+        console.error('Error deleting todo:', err);
+        return res.status(500).json({ message: 'Error deleting todo' });
+      }
+      if (results.affectedRows === 0) {
+        return res.status(404).json({ message: 'Todo not found' });
+      }
+      res.json({ message: 'Todo deleted successfully!' });
     });
-});
+  });
+
+
 
 // Start the server
 app.listen(8081, () => {

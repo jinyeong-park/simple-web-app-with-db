@@ -37,6 +37,9 @@ db.connect((err) => {
 });
 
 // Routes
+app.get('/api', (req, res) => {
+    res.send('API is working!');
+  });
 
 // Fetch all todos
 app.get('/todos', (req, res) => {

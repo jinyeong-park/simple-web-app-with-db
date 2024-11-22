@@ -4,9 +4,12 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "vite", 
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "deploy": "npm run build && scp -r ./dist ec2-user@<EC2-IP>:<PATH-TO-DEPLOY>",
+    "start": "vite preview --port 8080"  // Optional: Use this to preview locally if needed
+
   },
   "dependencies": {
     "react": "^18.2.0",

@@ -5,7 +5,9 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "nodemon server.js"
+    "start": "nodemon server.js",
+    "deploy": "scp -r ./backend ec2-user@<EC2-IP>:<PATH-TO-DEPLOY>",
+    "start-prod": "node server.js"  // For production without nodemon
   },
   "keywords": [],
   "author": "",

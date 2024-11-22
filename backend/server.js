@@ -10,20 +10,20 @@ app.use(cors());
 app.use(express.json()); // To parse JSON bodies
 
 // Database Connection
-const db = mysql.createConnection({
-    host: process.env.DB_HOST,
-    user: process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
-    database: process.env.DB_NAME
-});
-
 // const db = mysql.createConnection({
-//     host: 'todolist.cjs48um081zi.us-east-1.rds.amazonaws.com',
-//     user: 'admin',
-//     password: 'newpassword123',
-//     database: 'todolist',
-//     port: 3306
+//     host: process.env.DB_HOST,
+//     user: process.env.DB_USER,
+//     password: process.env.DB_PASSWORD,
+//     database: process.env.DB_NAME
 // });
+
+const db = mysql.createConnection({
+    host: 'todolist.cjs48um081zi.us-east-1.rds.amazonaws.com',
+    user: 'admin',
+    password: 'newpassword123',
+    database: 'todolist',
+    port: 3306
+});
 
 
 

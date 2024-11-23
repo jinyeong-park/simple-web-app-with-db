@@ -8,7 +8,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "deploy": "npm run build && scp -r ./dist ec2-user@<EC2-IP>:<PATH-TO-DEPLOY>",
-    "start": "vite preview --port 8080"  // Optional: Use this to preview locally if needed
+    "start": "vite preview --port 8080"
 
   },
   "dependencies": {
@@ -22,3 +22,5 @@
     "vite": "^4.2.0"
   }
 }
+
+

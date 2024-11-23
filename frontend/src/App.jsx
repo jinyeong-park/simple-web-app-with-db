@@ -6,10 +6,11 @@ import { TodoList } from "./TodoList"
 export default function App() {
 
   const [todos, setTodos] = useState([]);
-
+  // ALB DNS name
+  const ALB_dns_name = 'http://lb-for-ec2-717236205.us-east-1.elb.amazonaws.com'
   // Fetch todos from the backend API on component mount
   useEffect(() => {
-    fetch('http://localhost:8081/todos')  // Make sure the server is running
+    fetch(`${ALB_dns_name}/todos`)  // Make sure the server is running
       .then((response) => response.json())
       .then((data) => {
         // console.log('data:', data);
@@ -26,7 +27,7 @@ export default function App() {
 
   function addTodo(title) {
     // Send a POST request to the server to add a new todo
-    fetch('http://localhost:8081/todos', {
+    fetch(`${ALB_dns_name}/todos`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -46,7 +47,7 @@ export default function App() {
    
   function toggleTodo(id, completed) {
     const completedStatus = completed ? 1 : 0;
-    fetch(`http://localhost:8081/todos/${id}`, {
+    fetch(`${ALB_dns_name}/todos/${id}`, {
         method: 'PUT',
         headers: {
             'Content-Type': 'application/json',
@@ -70,7 +71,7 @@ export default function App() {
 
 
   function deleteTodo(id) {
-    fetch(`http://localhost:8081/todos/${id}`, {
+    fetch(`${ALB_dns_name}/todos/${id}`, {
         method: 'DELETE',
     })
     .then(response => response.json())

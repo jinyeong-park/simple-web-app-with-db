@@ -37,13 +37,10 @@ db.connect((err) => {
 });
 
 // Routes
-// app.get('/', (req, res) => {
-//     res.send('Welcome to the Node.js server!');
-//   });
-  
-// app.get('/api', (req, res) => {
-//     res.send('API is working!');
-//   });
+// AWS health check
+app.get('/health', (req, res) => {
+    res.status(200).send('OK');
+});
 
 // Fetch all todos
 app.get('/todos', (req, res) => {
